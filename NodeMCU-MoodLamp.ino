@@ -9,6 +9,8 @@
 #define MAX_PARAMS 5
 #define MAX_JSON 255
 
+String host_ip;
+
 const int INIT_COLOR      = 360;
 const int INIT_BRIGHTNESS = 0;
 
@@ -79,6 +81,7 @@ void sendJson(){
 
   
   root.printTo(s);
+  server.setContentLength(root.measureLength());
   server.send(200, "application/json", s);
   
 }
@@ -91,19 +94,22 @@ void handleRoot() {
  StaticJsonBuffer<200> jsonBuffer;
  JsonObject& root = jsonBuffer.createObject();
  JsonArray& devices = root.createNestedArray("devices");
- JsonObject& device_rgb = devices.createNestedObject();
- device_rgb["route"] = ROUTE_DEVICE;
- device_rgb["name"] = DEVICE_NAME; 
+ JsonObject& device_moodlamp = devices.createNestedObject();
+ device_moodlamp["route"] = ROUTE_DEVICE;
+ device_moodlamp["name"] = DEVICE_NAME; 
   
  root.printTo(s);
+ 
+ server.setContentLength(root.measureLength());
  server.send(200, "application/json", s);
   
 }
 
-void changeColor(int color){
+void changeColor(int color, int brightness){
   String s;
   
   moodlamp.color(color);
+  moodlamp.brightness(brightness);
 
   sendJson();
 
@@ -133,68 +139,68 @@ void handleChange(){
 }
 
 void handleColorRed(){
-  changeColor(COLOR_RED);
+  changeColor(COLOR_RED, moodlamp.last_brightness());
 }
 
 void handleColorOrange(){
-  changeColor(COLOR_ORANGE);
+  changeColor(COLOR_ORANGE,moodlamp.last_brightness());
 }
 
 void handleColorYellow(){
-  changeColor(COLOR_YELLOW);
+  changeColor(COLOR_YELLOW, moodlamp.last_brightness());
 }
 
 void handleColorLime(){
-  changeColor(COLOR_LIME);
+  changeColor(COLOR_LIME, moodlamp.last_brightness());
 }
 
 void handleColorGreen(){
-  changeColor(COLOR_GREEN);
+  changeColor(COLOR_GREEN, moodlamp.last_brightness());
 }
 
 void handleColorAqua(){
-  changeColor(COLOR_AQUA);
+  changeColor(COLOR_AQUA, moodlamp.last_brightness());
 }
 void handleColorCyan(){
-  changeColor(COLOR_CYAN);
+  changeColor(COLOR_CYAN, moodlamp.last_brightness());
 }
 
 void handleColorOcean(){
-  changeColor(COLOR_OCEAN);
+  changeColor(COLOR_OCEAN, moodlamp.last_brightness());
 }
 
 void handleColorBlue(){
-  changeColor(COLOR_BLUE);
+  changeColor(COLOR_BLUE, moodlamp.last_brightness());
 }
 
 void handleColorPurple(){
-  changeColor(COLOR_PURPLE);
+  changeColor(COLOR_PURPLE, moodlamp.last_brightness());
 }
 
 void handleColorViolet(){
-  changeColor(COLOR_VIOLET);
+  changeColor(COLOR_VIOLET, moodlamp.last_brightness());
 }
 
 void handleColorMagenta(){
-  changeColor(COLOR_MAGENTA);
+  changeColor(COLOR_MAGENTA, moodlamp.last_brightness());
 }
 
 void handleColorPink(){
-  changeColor(COLOR_PINK);
+  changeColor(COLOR_PINK, moodlamp.last_brightness());
 }
 
 void handleColorWhite(){
-  changeColor(COLOR_WHITE);
+  changeColor(COLOR_WHITE, moodlamp.last_brightness());
 }
 
 void handleColorOn(){
-  moodlamp.brightness(moodlamp.last_brightness());
+  changeColor(moodlamp.color(),moodlamp.last_brightness());
   
   sendJson();
 }
 
 void handleColorOff(){
-  moodlamp.brightness(0);
+  changeColor(moodlamp.color(),0);
   sendJson();
 }
 
@@ -241,7 +247,17 @@ void handleColorFade(){
 void handleNotFound(){
 
 
-server.send(200, "application/json","");
+  String s;
+  StaticJsonBuffer<MAX_JSON> jsonBuffer;
+  JsonObject& root = jsonBuffer.createObject();
+   
+  root["route"] = ROUTE_DEVICE;
+  root["name"] = DEVICE_NAME; 
+  root["error"] = "Invalid Request";
+    
+  root.printTo(s);
+  server.setContentLength(root.measureLength());
+  server.send(404, "application/json", s);
 
 }
 
@@ -272,6 +288,7 @@ void setup(void){
     
     //if you get here you have connected to the WiFi
       Serial.print ( "IP address: " );
+      
   Serial.println ( WiFi.localIP() );
  Serial.println("connected...yeey :)");
 
